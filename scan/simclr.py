@@ -26,7 +26,7 @@ parser.add_argument('--config_env',
 parser.add_argument('--config_exp',
                     help='Config file for the experiment')
 parser.add_argument('--seed', type=int, default=1, help='Random seed')
-
+parser.add_argument('--root_path', type=str, default='./', help='Root path')
 args = parser.parse_args()
 
 def main():
@@ -41,7 +41,7 @@ def main():
     print('Model is {}'.format(model.__class__.__name__))
     print('Model parameters: {:.2f}M'.format(sum(p.numel() for p in model.parameters()) / 1e6))
     print(model)
-    model = model.cuda()
+    model = model.cuda() if torch.cuda.is_available() else model
    
     # CUDNN
     print(colored('Set CuDNN benchmark', 'blue')) 
@@ -54,30 +54,36 @@ def main():
     val_transforms = get_val_transformations(p)
     print('Validation transforms:', val_transforms)
     train_dataset = get_train_dataset(p, train_transforms, to_augmented_dataset=True,
-                                        split='train+unlabeled') # Split is for stl-10
-    val_dataset = get_val_dataset(p, val_transforms) 
+                                        split='train+unlabeled', root=args.root_path,
+                                      download=False) #
+    # Split
+    # is for stl-10
+    val_dataset = get_val_dataset(p, val_transforms,  root=args.root_path,
+                                      download=False)
     train_dataloader = get_train_dataloader(p, train_dataset)
     val_dataloader = get_val_dataloader(p, val_dataset)
     print('Dataset contains {}/{} train/val samples'.format(len(train_dataset), len(val_dataset)))
     
     # Memory Bank
     print(colored('Build MemoryBank', 'blue'))
-    base_dataset = get_train_dataset(p, val_transforms, split='train') # Dataset w/o augs for knn eval
-    base_dataloader = get_val_dataloader(p, base_dataset) 
+    base_dataset = get_train_dataset(p, val_transforms, split='train', root=args.root_path,
+                                      download=False) # Dataset w/o augs for
+    # knn eval
+    base_dataloader = get_val_dataloader(p, base_dataset, )
     memory_bank_base = MemoryBank(len(base_dataset), 
                                 p['model_kwargs']['features_dim'],
                                 p['num_classes'], p['criterion_kwargs']['temperature'])
-    memory_bank_base.cuda()
+    memory_bank_base.cuda() if torch.cuda.is_available() else memory_bank_base
     memory_bank_val = MemoryBank(len(val_dataset),
                                 p['model_kwargs']['features_dim'],
                                 p['num_classes'], p['criterion_kwargs']['temperature'])
-    memory_bank_val.cuda()
+    memory_bank_val.cuda() if torch.cuda.is_available() else memory_bank_val
 
     # Criterion
     print(colored('Retrieve criterion', 'blue'))
     criterion = get_criterion(p)
     print('Criterion is {}'.format(criterion.__class__.__name__))
-    criterion = criterion.cuda()
+    criterion = criterion.cuda() if torch.cuda.is_available() else criterion
 
     # Optimizer and scheduler
     print(colored('Retrieve optimizer', 'blue'))
@@ -90,13 +96,13 @@ def main():
         checkpoint = torch.load(p['pretext_checkpoint'], map_location='cpu')
         optimizer.load_state_dict(checkpoint['optimizer'])
         model.load_state_dict(checkpoint['model'])
-        model.cuda()
+        model.cuda() if torch.cuda.is_available() else model
         start_epoch = checkpoint['epoch']
 
     else:
         print(colored('No checkpoint file at {}'.format(p['pretext_checkpoint']), 'blue'))
         start_epoch = 0
-        model = model.cuda()
+        model = model.cuda() if torch.cuda.is_available() else model
     
     # Training
     print(colored('Starting main loop', 'blue'))

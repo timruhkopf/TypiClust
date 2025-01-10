@@ -25,8 +25,8 @@ def simclr_train(train_loader, model, criterion, optimizer, epoch):
         b, c, h, w = images.size()
         input_ = torch.cat([images.unsqueeze(1), images_augmented.unsqueeze(1)], dim=1)
         input_ = input_.view(-1, c, h, w) 
-        input_ = input_.cuda(non_blocking=True)
-        targets = batch['target'].cuda(non_blocking=True)
+        input_ = input_.cuda(non_blocking=True) if torch.cuda.is_available() else input_
+        targets = batch['target'].cuda(non_blocking=True) if torch.cuda.is_available() else batch['target']
 
         output = model(input_).view(b, 2, -1)
         loss = criterion(output)
@@ -58,8 +58,8 @@ def scan_train(train_loader, model, criterion, optimizer, epoch, update_cluster_
 
     for i, batch in enumerate(train_loader):
         # Forward pass
-        anchors = batch['anchor'].cuda(non_blocking=True)
-        neighbors = batch['neighbor'].cuda(non_blocking=True)
+        anchors = batch['anchor'].cuda(non_blocking=True) if torch.cuda.is_available() else batch['anchor']
+        neighbors = batch['neighbor'].cuda(non_blocking=True) if torch.cuda.is_available() else batch['neighbor']
        
         if update_cluster_head_only: # Only calculate gradient for backprop of linear layer
             with torch.no_grad():
@@ -106,8 +106,8 @@ def selflabel_train(train_loader, model, criterion, optimizer, epoch, ema=None):
     model.train()
 
     for i, batch in enumerate(train_loader):
-        images = batch['image'].cuda(non_blocking=True)
-        images_augmented = batch['image_augmented'].cuda(non_blocking=True)
+        images = batch['image'].cuda(non_blocking=True) if torch.cuda.is_available() else batch['image']
+        images_augmented = batch['image_augmented'].cuda(non_blocking=True) if torch.cuda.is_available() else batch['image_augmented']
 
         with torch.no_grad(): 
             output = model(images)[0]

@@ -139,7 +139,7 @@ class SimCLRLoss(nn.Module):
 
         b, n, dim = features.size()
         assert(n == 2)
-        mask = torch.eye(b, dtype=torch.float32).cuda()
+        mask = torch.eye(b, dtype=torch.float32).cuda() if torch.cuda.is_available() else torch.eye(b, dtype=torch.float32)
 
         contrast_features = torch.cat(torch.unbind(features, dim=1), dim=0)
         anchor = features[:, 0]
@@ -152,7 +152,8 @@ class SimCLRLoss(nn.Module):
         logits = dot_product - logits_max.detach()
 
         mask = mask.repeat(1, 2)
-        logits_mask = torch.scatter(torch.ones_like(mask), 1, torch.arange(b).view(-1, 1).cuda(), 0)
+        tens = torch.arange(b).view(-1, 1).cuda() if torch.cuda.is_available() else torch.arange(b).view(-1, 1)
+        logits_mask = torch.scatter(torch.ones_like(mask), 1, tens , 0)
         mask = mask * logits_mask
 
         # Log-softmax

@@ -121,32 +121,32 @@ def get_model(p, pretrain_path=None):
 
 
 def get_train_dataset(p, transform, to_augmented_dataset=False,
-                        to_neighbors_dataset=False, split=None):
+                        to_neighbors_dataset=False, split=None, root=None, download=True):
     # Base dataset
     if p['train_db_name'] == 'cifar-10':
         from data.cifar import CIFAR10
-        dataset = CIFAR10(train=True, transform=transform, download=True)
+        dataset = CIFAR10(root=root, train=True, transform=transform, download=download)
 
     elif p['train_db_name'] == 'cifar-100':
         from data.cifar import CIFAR100
-        dataset = CIFAR100(train=True, transform=transform, download=True)
+        dataset = CIFAR100(root=root, train=True, transform=transform, download=download)
 
     elif p['train_db_name'] == 'stl-10':
         from data.stl import STL10
-        dataset = STL10(split=split, transform=transform, download=True)
+        dataset = STL10(root=root, split=split, transform=transform, download=download)
 
     elif p['train_db_name'] == 'tiny-imagenet':
         from data.tinyimagenet import TinyImageNet
-        dataset = TinyImageNet(root='', split='train', transform=transform)
+        dataset = TinyImageNet(root=root, split='train', transform=transform)
 
     elif p['train_db_name'] == 'imagenet':
         from data.imagenet import ImageNet
-        dataset = ImageNet(split='train', transform=transform)
+        dataset = ImageNet(root=root, split='train', transform=transform)
 
     elif p['train_db_name'] in ['imagenet_50', 'imagenet_100', 'imagenet_200']:
         from data.imagenet import ImageNetSubset
         subset_file = './data/imagenet_subsets/%s.txt' %(p['train_db_name'])
-        dataset = ImageNetSubset(subset_file=subset_file, split='train', transform=transform)
+        dataset = ImageNetSubset(root=root, subset_file=subset_file, split='train', transform=transform)
 
     else:
         raise ValueError('Invalid train dataset {}'.format(p['train_db_name']))
@@ -164,19 +164,19 @@ def get_train_dataset(p, transform, to_augmented_dataset=False,
     return dataset
 
 
-def get_val_dataset(p, transform=None, to_neighbors_dataset=False):
+def get_val_dataset(p, transform=None, to_neighbors_dataset=False, root=None, download=True):
     # Base dataset
     if p['val_db_name'] == 'cifar-10':
         from data.cifar import CIFAR10
-        dataset = CIFAR10(train=False, transform=transform, download=True)
+        dataset = CIFAR10(train=False, transform=transform, download=download, root=root)
     
     elif p['val_db_name'] == 'cifar-100':
         from data.cifar import CIFAR100
-        dataset = CIFAR100(train=False, transform=transform, download=True)
+        dataset = CIFAR100(train=False, transform=transform, download=download, root=root)
 
     elif p['val_db_name'] == 'stl-10':
         from data.stl import STL10
-        dataset = STL10(split='test', transform=transform, download=True)
+        dataset = STL10(split='test', transform=transform, download=download, root=root)
 
     elif p['train_db_name'] == 'tiny-imagenet':
         from data.tinyimagenet import TinyImageNet
