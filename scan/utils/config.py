@@ -7,10 +7,12 @@ import yaml
 from easydict import EasyDict
 from utils.utils import mkdir_if_missing
 
-def create_config(config_file_env, config_file_exp, seed, num_clusters=None):
+def create_config(config_file_env, config_file_exp, seed, root_dir=None, num_clusters=None):
     # Config for environment path
-    with open(config_file_env, 'r') as stream:
-        root_dir = yaml.safe_load(stream)['root_dir']
+
+    if root_dir is None:
+        with open(config_file_env, 'r') as stream:
+            root_dir = yaml.safe_load(stream)['root_dir']
    
     with open(config_file_exp, 'r') as stream:
         config = yaml.safe_load(stream)
@@ -26,7 +28,7 @@ def create_config(config_file_env, config_file_exp, seed, num_clusters=None):
         cfg[k] = v
 
     # Set paths for pretext task (These directories are needed in every stage)
-    base_dir = os.path.join(root_dir, cfg['train_db_name'])
+    base_dir = os.path.join(root_dir, 'typiclust', cfg['train_db_name'])
     pretext_dir = os.path.join(base_dir, 'pretext')
     mkdir_if_missing(base_dir)
     mkdir_if_missing(pretext_dir)
@@ -40,7 +42,7 @@ def create_config(config_file_env, config_file_exp, seed, num_clusters=None):
     # If we perform clustering or self-labeling step we need additional paths.
     # We also include a run identifier to support multiple runs w/ same hyperparams.
     if cfg['setup'] in ['scan', 'selflabel']:
-        base_dir = os.path.join(root_dir, cfg['train_db_name'])
+        base_dir = os.path.join(root_dir,'typiclust', cfg['train_db_name'])
         scan_dir = os.path.join(base_dir, 'scan')
         selflabel_dir = os.path.join(base_dir, 'selflabel') 
         mkdir_if_missing(base_dir)
