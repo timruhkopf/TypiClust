@@ -115,6 +115,7 @@ def main():
     from utils.filelogger import BufferedFileLogger
     filelogger = BufferedFileLogger(
         file_name=f'pretext_metrics_seed_{args.seed}.csv', buffer_size=10,
+        file_path=p['pretext_dir'],
         header=("metric", "value", "global_step",)
     )
     for epoch in range(start_epoch, args.epochs):
@@ -179,6 +180,7 @@ def main():
     print('Accuracy of top-%d nearest neighbors on val set is %.2f' % (topk, 100 * acc))
     np.save(p['topk_neighbors_val_path'], indices)
     filelogger.add_scalar(f'Final_top{topk}_neighbors_val_accuracy', acc, epoch)
+    filelogger.close()
 
 
 if __name__ == '__main__':
